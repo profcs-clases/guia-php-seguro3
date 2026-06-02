@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 5: Recursos</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle">🌙</button>
+    <aside class="sidebar">
+        <h2>🛡️ PHP Profesional</h2>
+        <nav>
+            <a href="index.html">1. Anatomía del Proyecto</a>
+            <a href="base-datos.html">2. Base de Datos</a>
+            <a href="seguridad.html">3. Seguridad</a>
+            <a href="arquitectura.html">4. Arquitectura</a>
+            <a href="recursos.html">5. Recursos</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <h1>Módulo 5: Checklist de Despliegue y Glosario</h1>
+        
+        <div class="intro-box">
+            <h3>📌 Antes de entregar o publicar tu proyecto</h3>
+            <p>El paso de "funciona en mi computadora" a "está listo para producción" requiere verificar estos puntos de seguridad. Puedes imprimir esta página (Ctrl+P) y usarla como lista de verificación.</p>
+        </div>
+
+        <h2>✅ Checklist de Seguridad Imprimible</h2>
+        <div style="background: var(--bg-secondary); padding: 2rem; border-radius: 0.75rem; margin-bottom: 2rem; border: 1px solid rgba(128,128,128,0.2);">
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Las contraseñas se guardan con <code>password_hash()</code> (nunca en texto plano ni MD5).</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Todas las consultas a la base de datos usan <code>prepare()</code> y <code>execute()</code> (cero concatenación de variables).</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Los formularios POST incluyen y validan un token CSRF.</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Todo dato que se muestra en pantalla pasa por <code>htmlspecialchars()</code>.</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Se llama a <code>session_regenerate_id(true)</code> después de un login exitoso.</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>Los mensajes de error de login son genéricos ("Credenciales inválidas"), no revelan si el email existe.</span>
+            </label>
+            <label style="display: flex; gap: 1rem; margin-bottom: 1rem; cursor: pointer; align-items: flex-start;">
+                <input type="checkbox" style="margin-top: 0.3rem;"> 
+                <span>El archivo de configuración con contraseñas NO está subido a GitHub (está en .gitignore).</span>
+            </label>
+        </div>
+
+        <h2>📚 Glosario Simplificado</h2>
+        <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem;">
+            <li><strong>Front Controller:</strong> Un único archivo (<code>index.php</code>) que recibe todas las peticiones y decide qué hacer. Es como la recepción de un edificio.</li>
+            <li><strong>SQL Injection (SQLi):</strong> Ataque donde el usuario introduce código SQL en un formulario para manipular la base de datos. Se previene con Consultas Preparadas.</li>
+            <li><strong>XSS (Cross-Site Scripting):</strong> Ataque donde se inyecta código JavaScript malicioso que se ejecuta en el navegador de otros usuarios. Se previene con <code>htmlspecialchars</code>.</li>
+            <li><strong>CSRF:</strong> Engañar a un usuario logueado para que realice una acción sin su consentimiento. Se previene con Tokens CSRF.</li>
+            <li><strong>Hashing:</strong> Proceso de una sola vía para convertir una contraseña en una cadena de texto ilegible. No se puede "desencriptar", solo se puede comparar.</li>
+            <li><strong>Middleware:</strong> Un "filtro" que se ejecuta antes de llegar a la lógica principal, ideal para verificar si un usuario tiene permiso (rol) para ver una página.</li>
+        </ul>
+
+        <div class="tips-section">
+            <h3>🚀 Próximos Pasos (Cultura Profesional)</h3>
+            <p><em>Estos temas no son obligatorios para aprobar este curso, pero dominarlos te dará una ventaja enorme en tu primer empleo:</em></p>
+            <ul>
+                <li><strong>Composer:</strong> El gestor de paquetes de PHP. Aprende a usarlo para instalar librerías en lugar de copiar y pegar código.</li>
+                <li><strong>Archivos .env:</strong> Nunca escribas contraseñas en el código. Usa un archivo <code>.env</code> (que no se sube a Git) para guardarlas.</li>
+                <li><strong>Git y Pull Requests:</strong> Trabaja en ramas separadas (<code>feature/mi-cambio</code>) y nunca hagas cambios directamente sobre la rama <code>main</code>.</li>
+                <li><strong>Xdebug:</strong> Una herramienta que te permite detener el código línea por línea en tu editor (VS Code) para ver exactamente qué está fallando, sin usar <code>var_dump</code>.</li>
+            </ul>
+        </div>
+    </main>
+    <script>mermaid.initialize({ startOnLoad: true, theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' });</script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 2: Base de Datos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle">🌙</button>
+    <aside class="sidebar">
+        <h2>🛡️ PHP Profesional</h2>
+        <nav>
+            <a href="index.html">1. Anatomía del Proyecto</a>
+            <a href="base-datos.html">2. Base de Datos</a>
+            <a href="seguridad.html">3. Seguridad</a>
+            <a href="arquitectura.html">4. Arquitectura</a>
+            <a href="recursos.html">5. Recursos</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <h1>Módulo 2: Conexión a Base de Datos Segura</h1>
+        
+        <div class="intro-box">
+            <h3>📌 ¿Por qué no usar consultas directas?</h3>
+            <p>Es tentador escribir <code>$conexion->query("SELECT * FROM usuarios WHERE id = $id")</code>. Pero si un usuario malintencionado escribe <code>1 OR 1=1</code> en la URL, tu base de datos le entregará <strong>toda</strong> la tabla. Esto se llama <strong>SQL Injection</strong>.</p>
+        </div>
+
+        <h2>2.1 La analogía del "Sobre Sellado"</h2>
+        <div class="solution-box">
+            <h4>✅ Consultas Preparadas (Prepared Statements)</h4>
+            <p>Imagina que envías una carta. En lugar de escribir la dirección <em>dentro</em> del mensaje (donde alguien podría alterarla), escribes la dirección en el <strong>sobre</strong>. El cartero (la base de datos) sabe que el sobre es solo para dirigir el paquete, no es parte del mensaje.</p>
+            <p>Las <strong>Consultas Preparadas</strong> hacen exactamente eso: separan la <em>estructura</em> de la consulta de los <em>datos</em>. La base de datos compila la estructura primero, y luego inserta los datos como <strong>texto literal</strong>, imposibilitando que se ejecuten como código.</p>
+        </div>
+
+        <h3>📊 Diagrama: Inyección SQL vs. Consulta Preparada</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant A as 👤 Atacante
+    participant P as 💻 PHP
+    participant DB as 🗄️ Base de Datos
+
+    rect rgb(254, 242, 242)
+    Note over A,DB: ❌ ESCENARIO PELIGROSO: Concatenación
+    A->>P: Envía id = "1 OR 1=1"
+    P->>DB: "SELECT * FROM users WHERE id = 1 OR 1=1"
+    DB-->>P: ⚠️ Devuelve TODOS los usuarios
+    end
+
+    rect rgb(240, 253, 244)
+    Note over A,DB: ✅ ESCENARIO SEGURO: Consulta Preparada
+    A->>P: Envía id = "1 OR 1=1"
+    P->>DB: 1. PREPARE: "SELECT * FROM users WHERE id = ?"
+    DB-->>P: OK, estructura compilada
+    P->>DB: 2. EXECUTE: ["1 OR 1=1"]
+    DB-->>P: ✅ Busca literalmente el ID con ese texto (no encuentra nada)
+    end
+        </div>
+
+        <h2>2.2 Implementación con PDO y Patrón Singleton</h2>
+        <div class="solution-box">
+            <h4>✅ Código profesional reutilizable</h4>
+            <p>Usamos el patrón <strong>Singleton</strong> para asegurar que solo se abra <em>una</em> conexión a la base de datos en toda la aplicación, ahorrando memoria.</p>
+            <pre><code class="language-php">namespace App\Models;
+use PDO;
+
+class Database {
+    private static ?self $instance = null;
+    private PDO $connection;
+
+    private function __construct() {
+        $dsn = "mysql:host=localhost;dbname=mi_bd;charset=utf8mb4";
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_EMULATE_PREPARES => false, // ⚠️ CRÍTICO: Fuerza a la BD a preparar, no a PHP
+        ];
+        $this->connection = new PDO($dsn, "root", "", $options);
+    }
+
+    public static function getInstance(): self {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public function getConnection(): PDO {
+        return $this->connection;
+    }
+}</code></pre>
+        </div>
+
+        <h2>2.3 Transacciones: "Todo o Nada"</h2>
+        <div class="solution-box">
+            <h4>✅ Evita datos a medias</h4>
+            <p>Si necesitas guardar un usuario Y su perfil, y la segunda consulta falla, no quieres que el usuario quede guardado sin perfil. Las transacciones lo evitan.</p>
+            <pre><code class="language-php">$pdo = Database::getInstance()->getConnection();
+try {
+    $pdo->beginTransaction(); // Inicia la "grabación"
+    
+    $pdo->prepare("INSERT INTO usuarios (email) VALUES (?)")->execute([$email]);
+    $pdo->prepare("INSERT INTO perfiles (user_id) VALUES (?)")->execute([$nuevo_id]);
+    
+    $pdo->commit(); // ¡Éxito! Guarda todo permanentemente
+} catch (Exception $e) {
+    $pdo->rollBack(); // Algo falló: deshace TODO como si nada hubiera pasado
+    error_log("Error: " . $e->getMessage());
+}</code></pre>
+        </div>
+
+        <div class="tips-section">
+            <h3>💡 Regla de Oro para tu proyecto</h3>
+            <p><strong>NUNCA</strong> concatenes variables directamente en una consulta SQL. Siempre usa <code>prepare()</code> y <code>execute()</code>. Si sigues esta regla, tu proyecto será inmune a SQL Injection.</p>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' });</script>
+    <script src="script.js"></script>
+</body>
+</html>

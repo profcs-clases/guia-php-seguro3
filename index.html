@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 1: Anatomía del Proyecto</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle">🌙</button>
+    <aside class="sidebar">
+        <h2>🛡️ PHP Profesional</h2>
+        <nav>
+            <a href="index.html">1. Anatomía del Proyecto</a>
+            <a href="base-datos.html">2. Base de Datos</a>
+            <a href="seguridad.html">3. Seguridad</a>
+            <a href="arquitectura.html">4. Arquitectura</a>
+            <a href="recursos.html">5. Recursos</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <h1>Módulo 1: ¿Cómo se organiza un proyecto PHP real?</h1>
+        
+        <div class="intro-box">
+            <h3>📌 ¿Qué vamos a aprender?</h3>
+            <p>Hasta ahora, probablemente has escrito tus ejercicios en un solo archivo: <code>ejercicio1.php</code>. Esto funciona para tareas pequeñas, pero imagina un proyecto con 50 archivos y 5 compañeros de equipo... ¡sería un caos!</p>
+            <p>Aquí aprenderás a <strong>organizar tu código como lo hacen los profesionales</strong>, usando patrones probados en la industria.</p>
+        </div>
+
+        <h2>1.1 El problema del "todo en un archivo"</h2>
+        <div class="naive-code">
+            <h4>❌ El enfoque "Espagueti" (Lo que probablemente haces ahora)</h4>
+            <pre><code class="language-php">&lt;?php
+// Todo mezclado: conexión, lógica, validación y HTML
+$conexion = new mysqli("localhost", "root", "", "mi_bd");
+
+if ($_POST) {
+    $nombre = $_POST['nombre'];
+    // Guardar en base de datos directamente
+    $conexion->query("INSERT INTO usuarios (nombre) VALUES ('$nombre')");
+    echo "Usuario registrado";
+}
+?&gt;
+&lt;form method="POST"&gt;
+    &lt;input name="nombre"&gt;
+    &lt;button&gt;Registrar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+            <p><strong>Problemas:</strong> 🔴 Si cambias el diseño, tocas la lógica. 🔴 Copias y pegas la conexión en cada archivo. 🔴 Es vulnerable a ataques.</p>
+        </div>
+
+        <h2>1.2 La solución: Separar responsabilidades (MVC)</h2>
+        <div class="solution-box">
+            <h4>✅ La analogía de la Oficina</h4>
+            <p>Piensa en tu proyecto como una oficina. No todos hacen todo:</p>
+            <ul style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                <li>👔 <strong>El Recepcionista (Controlador):</strong> Recibe la petición del usuario, verifica permisos y dirige el tráfico.</li>
+                <li>📊 <strong>El Contador (Modelo):</strong> Habla con la base de datos. Sabe cómo guardar y buscar datos, pero no sabe nada de HTML.</li>
+                <li>🎨 <strong>El Diseñador (Vista):</strong> Solo se encarga de mostrar la información en HTML. No toma decisiones ni consulta la base de datos.</li>
+            </ul>
+        </div>
+
+        <h3>📊 Diagrama: Flujo de una petición MVC</h3>
+        <div class="mermaid">
+sequenceDiagram
+    participant U as 👤 Usuario (Navegador)
+    participant FC as 🚪 Front Controller (index.php)
+    participant C as 👔 Controlador
+    participant M as 📊 Modelo (Base de Datos)
+    participant V as 🎨 Vista (HTML)
+
+    U->>FC: Solicita "/registro"
+    FC->>C: Carga RegistroController
+    C->>C: Valida datos del formulario
+    C->>M: Pide guardar usuario
+    M-->>C: Confirma guardado
+    C->>V: Carga la vista "exito.php" con los datos
+    V-->>U: Muestra el HTML final
+        </div>
+
+        <h2>1.3 La estructura de carpetas profesional</h2>
+        <div class="solution-box">
+            <h4>✅ Organización por carpetas</h4>
+            <pre><code class="language-text">mi_proyecto/
+├── public/              ← 🌐 ÚNICA carpeta visible desde el navegador
+│   ├── index.php        ← El "Recepcionista" (Front Controller)
+│   └── assets/          ← CSS, JS, Imágenes
+├── app/                 ← 🧠 El "cerebro" (inaccesible desde la web)
+│   ├── Controllers/     ← Lógica de flujo
+│   ├── Models/          ← Lógica de datos
+│   └── Views/           ← Archivos HTML
+├── config/              ← ⚙️ Contraseñas y configuración
+└── storage/             ← 📦 Logs de errores y archivos subidos</code></pre>
+        </div>
+
+        <h2>1.4 Autoloading: No más "require" por todos lados</h2>
+        <div class="solution-box">
+            <h4>✅ La función mágica de PHP</h4>
+            <p>En lugar de escribir 20 <code>require_once</code>, usamos <code>spl_autoload_register</code>. Le dice a PHP: "Cuando veas <code>new App\Models\Usuario</code>, busca automáticamente en <code>app/Models/Usuario.php</code>".</p>
+            <pre><code class="language-php">// config/autoload.php
+spl_autoload_register(function ($nombreClase) {
+    $archivo = __DIR__ . '/../app/' . str_replace('\\', '/', $nombreClase) . '.php';
+    if (file_exists($archivo)) {
+        require_once $archivo;
+    }
+});</code></pre>
+        </div>
+
+        <div class="tips-section">
+            <h3>💡 Pausa para reflexionar y Ejercicio</h3>
+            <p><em>¿En tus ejercicios anteriores, tienes separada la lógica de la presentación? Si no, ¡no te preocupes! Este es el momento de cambiar.</em></p>
+            <p><strong>🏋️ Ejercicio práctico:</strong> Antes de continuar, toma un ejercicio viejo y crea las carpetas <code>public/</code> y <code>app/Views/</code>. Mueve tu HTML a una vista y haz que <code>public/index.php</code> la cargue. ¡Ese es tu primer paso profesional!</p>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' });</script>
+    <script src="script.js"></script>
+</body>
+</html>

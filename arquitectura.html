@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 4: Arquitectura</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle">🌙</button>
+    <aside class="sidebar">
+        <h2>🛡️ PHP Profesional</h2>
+        <nav>
+            <a href="index.html">1. Anatomía del Proyecto</a>
+            <a href="base-datos.html">2. Base de Datos</a>
+            <a href="seguridad.html">3. Seguridad</a>
+            <a href="arquitectura.html">4. Arquitectura</a>
+            <a href="recursos.html">5. Recursos</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <h1>Módulo 4: Arquitectura, Validación y Buenas Prácticas</h1>
+        
+        <div class="intro-box">
+            <h3>📌 La regla de oro: "Nunca confíes en el cliente"</h3>
+            <p>Cualquier dato que venga del navegador (formularios, URLs, cookies) puede haber sido modificado. La validación en JavaScript es solo para mejorar la experiencia del usuario; la <strong>validación real debe ocurrir siempre en el servidor (PHP)</strong>.</p>
+        </div>
+
+        <h2>4.1 La analogía de la Línea de Ensamblaje</h2>
+        <div class="solution-box">
+            <h4>✅ Flujo de una petición segura</h4>
+            <p>Imagina una fábrica. Un producto (la petición del usuario) pasa por varias estaciones de control antes de ser aprobado:</p>
+            <ol style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 1.8;">
+                <li><strong>Middleware (Seguridad):</strong> ¿El usuario tiene permiso para estar aquí?</li>
+                <li><strong>Validador (Calidad):</strong> ¿Los datos tienen el formato correcto (email válido, cédula correcta)?</li>
+                <li><strong>Controlador (Gerente):</strong> Coordina el proceso.</li>
+                <li><strong>Modelo (Almacén):</strong> Guarda los datos limpios en la base de datos.</li>
+                <li><strong>Vista (Empaque):</strong> Muestra el resultado al usuario.</li>
+            </ol>
+        </div>
+
+        <h3>📊 Diagrama: Flujo de Validación</h3>
+        <div class="mermaid">
+graph TD
+    A[👤 Usuario envía Formulario] --> B{🛡️ Middleware: ¿Está logueado?}
+    B -- No --> C[🚫 Redirigir a Login]
+    B -- Sí --> D{✅ Validador: ¿Datos correctos?}
+    D -- No --> E[💾 Guardar errores en Sesión<br>🔄 Redirigir al formulario]
+    D -- Sí --> F[📊 Modelo: Guardar en BD con PDO]
+    F --> G[🎨 Vista: Mostrar mensaje de éxito]
+        </div>
+
+        <h2>4.2 Clase Validadora Reutilizable</h2>
+        <div class="solution-box">
+            <h4>✅ No repitas código de validación</h4>
+            <p>En lugar de hacer 10 <code>if (empty(...))</code>, crea una clase que acumule los errores.</p>
+            <pre><code class="language-php">class Validator {
+    private static array $errors = [];
+
+    public static function required(string $field, mixed $value): bool {
+        if (empty(trim((string)$value))) {
+            self::$errors[$field] = "El campo $field es obligatorio.";
+            return false;
+        }
+        return true;
+    }
+
+    public static function email(string $field, string $value): bool {
+        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+            self::$errors[$field] = "Correo electrónico inválido.";
+            return false;
+        }
+        return true;
+    }
+
+    public static function getErrors(): array { return self::$errors; }
+    public static function isValid(): bool { return empty(self::$errors); }
+}</code></pre>
+            <p><strong>Uso en el controlador:</strong></p>
+            <pre><code class="language-php">Validator::required('email', $_POST['email']);
+Validator::email('email', $_POST['email']);
+
+if (!Validator::isValid()) {
+    $_SESSION['errors'] = Validator::getErrors();
+    header("Location: /registro"); // Vuelve al formulario para mostrar errores
+    exit;
+}</code></pre>
+        </div>
+
+        <h2>4.3 Depuración Profesional (Adiós al var_dump)</h2>
+        <div class="naive-code">
+            <h4>❌ Error común en producción</h4>
+            <p>Dejar <code>var_dump($usuario); die();</code> o tener <code>display_errors = On</code> en un servidor real. Esto le regala a los hackers la estructura de tu base de datos y rutas de archivos.</p>
+        </div>
+        <div class="solution-box">
+            <h4>✅ Logging silencioso</h4>
+            <pre><code class="language-php">// En config.php (Producción)
+ini_set('display_errors', 0); // No mostrar en pantalla
+ini_set('log_errors', 1);     // Guardar en archivo
+ini_set('error_log', __DIR__ . '/../storage/logs/errores.log');
+
+// En tu código:
+try {
+    // Código que puede fallar
+} catch (Exception $e) {
+    error_log("Fallo en registro: " . $e->getMessage());
+    echo "Ocurrió un error inesperado. Intente más tarde."; // Mensaje amigable
+}</code></pre>
+        </div>
+
+        <div class="tips-section">
+            <h3>💡 Consejos para tu proyecto final</h3>
+            <ul>
+                <li>🎯 Usa <code>htmlspecialchars()</code> en <em>cada</em> variable que imprimas en HTML.</li>
+                <li>🎯 Para subir archivos, no confíes en <code>$_FILES['archivo']['type']</code>. Usa <code>finfo_file()</code> para verificar el tipo real del archivo y guárdalo con un nombre aleatorio (ej: <code>uniqid() . '.jpg'</code>).</li>
+                <li>📚 <strong>Para investigar después:</strong> Aprende a usar <strong>Composer</strong> (gestor de dependencias) y <strong>Variables de Entorno (.env)</strong> para no subir contraseñas a GitHub.</li>
+            </ul>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default' });</script>
+    <script src="script.js"></script>
+</body>
+</html>
