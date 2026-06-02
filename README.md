@@ -84,7 +84,7 @@ Para sacar el máximo provecho de este material, es ideal que ya tengas nociones
 
 ¿No quieres descargar nada todavía? Puedes navegar por la guía interactiva directamente desde tu navegador haciendo clic en el siguiente enlace:
 
-🔗 **[Ver Guía Interactiva en GitHub Pages](https://profcs-clases.github.io/guia-php-seguro/index.html)**
+🔗 **[Ver Guía Interactiva en GitHub Pages](https://profcs-clases.github.io/guia-php-seguro3/index.html)**
 
 *(Los diagramas y el modo oscuro funcionan perfectamente en la versión web).*
 
